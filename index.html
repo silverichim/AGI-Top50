@@ -202,7 +202,13 @@ table.sumt td:first-child{font-family:var(--font)}
 
 /* ---------- 3D UMAP tab ---------- */
 .umap-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
-#umap-plot{height:max(520px,calc(100vh - 215px));min-width:0}
+#u-tabs{display:flex;gap:2px;padding:8px 10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+#u-tabs button{border:1px solid transparent;border-bottom:0;background:transparent;border-radius:8px 8px 0 0;padding:7px 14px;margin-bottom:-1px;
+  color:var(--ink-2);font:inherit;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:7px}
+#u-tabs button:hover{background:var(--surface-2)}
+#u-tabs button[aria-selected="true"]{background:var(--surface);border-color:var(--line);border-bottom:1px solid var(--surface);color:var(--ink)}
+#u-tabs button i{width:9px;height:9px;border-radius:2px;display:inline-block}
+#umap-plot{height:max(520px,calc(100vh - 262px));min-width:0}
 #u-ctl{display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center;padding:8px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink)}
 #u-ctl .grp{display:flex;align-items:center;gap:6px;white-space:nowrap}
 #u-ctl b{font-weight:600;color:var(--ink-2);margin-right:2px}
@@ -519,15 +525,21 @@ table.sumt td:first-child{font-family:var(--font)}
 <!-- ================= 3D UMAP ================= -->
 <section id="sec-umap" role="tabpanel" hidden>
   <div class="umap-card">
+    <div id="u-tabs" role="tablist" aria-label="Cell type">
+      <button role="tab" data-view="Beta" aria-selected="true"><i style="background:#2a78d6"></i>β cells</button>
+      <button role="tab" data-view="Alpha" aria-selected="false"><i style="background:#eb6834"></i>α cells</button>
+      <button role="tab" data-view="Delta" aria-selected="false"><i style="background:#1baf7a"></i>δ cells</button>
+      <button role="tab" data-view="all" aria-selected="false">all three</button>
+    </div>
     <div id="umap-plot"></div>
     <div id="u-ctl">
-      <span class="grp"><b>Colour</b><button class="chip" data-mode="pt" aria-pressed="true">pseudotime</button><button class="chip" data-mode="type" aria-pressed="false">cell type</button></span>
+      <span class="grp"><b>Colour</b><button class="chip" data-mode="pt" aria-pressed="true">pseudotime</button><button class="chip" data-mode="type" aria-pressed="false">cell type</button><label class="check"><input type="checkbox" id="u-bg"> other nuclei</label></span>
       <span class="grp"><b>Pseudotime window</b><input type="checkbox" id="u-winOn" title="Highlight only cells near the chosen pseudotime"><input type="range" id="u-winT" min="0" max="1" step="0.01" value="0"><span class="num" id="u-winV">0.00</span>±<input type="number" id="u-winW" value="0.08" step="0.02" min="0.02" max="0.5"><button class="btn sm" id="u-play">▶ play</button></span>
       <span class="grp"><b>Points</b>size<input type="range" id="u-psz" min="1" max="4" step="0.2" value="1.8">opacity<input type="range" id="u-pop" min="0.1" max="1" step="0.05" value="0.6"></span>
       <span class="grp"><button class="chip" id="u-clean" aria-pressed="false">Clean figure</button></span>
     </div>
   </div>
-  <p class="hint umap-note">Fig. S2C · β, α and δ maturation trajectories on the Harmony-integrated 3D UMAP. Cells are coloured by pseudotime within each type; the dashed part of a trajectory is an interpolated jump between milestone clusters with no cells in between. Use the camera icon in the plot toolbar to save a PNG (3×); "Clean figure" hides the grid, subtitle and view buttons first.</p>
+  <p class="hint umap-note">One tab per cell type; the other two types and the unlabelled background nuclei are hidden, and every tab keeps the same axis ranges and camera so the panels are directly comparable. The dashed part of a trajectory is an interpolated jump between milestone clusters with no cells in between. Use the camera icon in the plot toolbar to save a PNG (3×); "Clean figure" hides the grid, subtitle and view buttons first.</p>
 </section>
 </main>
 
@@ -4423,77 +4435,163 @@ maplibre-gl/dist/maplibre-gl.js:
 window.Plotly = Plotly;
 return Plotly;
 }));</script>
-<script>/* UMAP tab: lazily renders the embedded Plotly figure and wires its control bar. Exposes window.UMAP = {init, resize, theme}. */
+<script>/* UMAP tab: one 3D scene, switched between cell types by sub-tab. Axis ranges are fixed globally so
+   every tab frames the embedding identically. Background nuclei are off by default.
+   Exposes window.UMAP = {init, resize, theme}. */
 (function(){
 'use strict';
 const $ = id => document.getElementById(id);
-function dec(o){ if (o && o.bdata){ const bin=atob(o.bdata); const buf=new ArrayBuffer(bin.length); const u8=new Uint8Array(buf); for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i); return new Float64Array(buf);} return Float64Array.from(o||[]); }
-let gd=null, C=null, T=[], mode='pt', win=false, playing=false, timer=null, clean=false, dark=false, ready=false;
+const DT={f8:Float64Array, f4:Float32Array, i1:Int8Array, u1:Uint8Array, i2:Int16Array, u2:Uint16Array, i4:Int32Array, u4:Uint32Array};
+function dec(o){
+  if (o && o.bdata){
+    const bin=atob(o.bdata), buf=new ArrayBuffer(bin.length), u8=new Uint8Array(buf);
+    for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
+    const A=DT[o.dtype]||Float64Array;
+    return A===Float64Array ? new Float64Array(buf) : Float64Array.from(new A(buf));
+  }
+  return Float64Array.from(o||[]);
+}
 
+let gd=null, C=null, T=[], BASE=null, CONFIG=null, RANGE=null;
+let view='Beta', mode='pt', win=false, playing=false, timer=null, clean=false, dark=false, showBg=false, ready=false;
+
+const shown = g => view==='all' || view===g;
+const idxOf = g => T.findIndex(t=>t.g===g);
+
+function theme(){
+  return dark
+    ? {bg:'#1a1e21', ink:'#e6e9ec', ink2:'#aab4bd', grid:'#2b3136', btn:'#22272b', brd:'#3a4248', dim:'#2a2f34', nuc:'#3a4046', lead:'#6b7680'}
+    : {bg:'#ffffff', ink:'#1f2428', ink2:'#55606a', grid:'#ece9e1', btn:'#ffffff', brd:'#d9d7d1', dim:'#d9dce0', nuc:'#cfcdc6', lead:'#8a949d'};
+}
+function titleText(){
+  if (view==='all') return 'β, α and δ maturation trajectories on the Harmony-integrated 3D UMAP (batch = sample)';
+  return T[idxOf(view)].sym+' maturation trajectory on the Harmony-integrated 3D UMAP (batch = sample)';
+}
+function subtitleText(){
+  if (clean) return '';
+  const base = view==='all'
+    ? 'Cells coloured by pseudotime within each type, lighter = earlier (β blue · α orange · δ green).'
+    : 'Cells coloured by pseudotime, lighter = earlier; the other cell types are hidden.';
+  return base + ' Solid line = trajectory through milestone clusters, dashed = interpolated jump where no cells lie in between.<br>'
+    + 'Subsampled to 12,000 cells per type (δ 9,860). Every tab shares one set of axis ranges, so the framing is comparable. Drag to rotate.';
+}
+
+/* ---------- layout ---------- */
+function computeRanges(raw){
+  let lo=[Infinity,Infinity,Infinity], hi=[-Infinity,-Infinity,-Infinity];
+  const eat=A=>{ for(let d=0;d<3;d++){ const a=A[d]; for(let i=0;i<a.length;i++){ if(a[i]<lo[d]) lo[d]=a[i]; if(a[i]>hi[d]) hi[d]=a[i]; } } };
+  for (const t of T) eat([t.X,t.Y,t.Z]);
+  const bg=raw[C.other]; eat([dec(bg.x), dec(bg.y), dec(bg.z)]);
+  RANGE = lo.map((v,d)=>{ const pad=(hi[d]-v)*0.04; return [v-pad, hi[d]+pad]; });
+}
+function applyLayout(){
+  const t=theme();
+  const ax = d => ({showbackground:false, showticklabels:false, title:{text:''}, showgrid:!clean, gridcolor:t.grid,
+                    zeroline:!clean, zerolinecolor:t.grid, showspikes:false, showline:false, showaxeslabels:false, range:RANGE[d]});
+  return Plotly.relayout(gd, {
+    paper_bgcolor:t.bg, 'font.color':t.ink,
+    'title.text':titleText(), 'title.font.color':t.ink, 'title.font.size':15,
+    'title.subtitle.text':subtitleText(), 'title.subtitle.font.color':t.ink2, 'title.subtitle.font.size':11,
+    'legend.font.color':t.ink, 'legend.font.size':11,
+    'scene.bgcolor':t.bg, 'scene.xaxis':ax(0), 'scene.yaxis':ax(1), 'scene.zaxis':ax(2), 'scene.aspectmode':'data',
+    'margin.t':clean?72:96,
+    'updatemenus[0].visible':!clean, 'updatemenus[0].bgcolor':t.btn, 'updatemenus[0].bordercolor':t.brd, 'updatemenus[0].font.color':t.ink
+  });
+}
+function colorbarFor(i, slot, n){
+  const t=theme();
+  const y = n===1 ? 0.5 : [0.78,0.5,0.22][slot];
+  return {orientation:'v', x:1.0, xanchor:'left', y:y, yanchor:'middle', len:(n===1?0.42:0.22), thickness:(n===1?13:10),
+          title:{text:T[i].sym+' pseudotime', font:{size:(n===1?12:10.5), color:t.ink2}, side:'top'},
+          tickfont:{size:(n===1?10:9), color:t.ink2}, outlinewidth:0};
+}
+
+/* ---------- visibility ---------- */
+function applyVisibility(){
+  const t=theme();
+  for (const ty of T){
+    const on = shown(ty.g);
+    for (const k of (C.groups[ty.g]||[])) Plotly.restyle(gd, {visible: on && (k!==ty.dim || win)}, [k]);
+  }
+  Plotly.restyle(gd, {visible:showBg, 'marker.color':t.nuc}, [C.other]);
+  const live = T.map((ty,i)=>shown(ty.g)?i:-1).filter(i=>i>=0);
+  T.forEach((ty,i)=>{ if(!shown(ty.g)) Plotly.restyle(gd, {'marker.showscale':false}, [ty.hi]); });
+  live.forEach((i,slot)=>Plotly.restyle(gd, {'marker.showscale': mode==='pt', 'marker.colorbar': colorbarFor(i, slot, live.length)}, [T[i].hi]));
+  Plotly.restyle(gd, {'marker.color':t.dim}, T.map(ty=>ty.dim));
+  Plotly.restyle(gd, {'textfont.color':t.ink}, C.labels);
+  Plotly.restyle(gd, {'line.color':t.lead}, C.leaders);
+}
+
+/* ---------- pseudotime window ---------- */
 function pos(t, pt){
   const M=t.ms; if (pt<=M[0][3]) return M[0]; if (pt>=M[M.length-1][3]) return M[M.length-1];
   for (let k=0;k<M.length-1;k++){ const a=M[k], b=M[k+1]; if (pt>=a[3] && pt<=b[3]){ const f=b[3]>a[3]?(pt-a[3])/(b[3]-a[3]):0; return [a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f, a[2]+(b[2]-a[2])*f, pt]; } }
   return M[0];
 }
-function applyColor(){
-  const idx=T.map(t=>t.hi);
-  if (mode==='pt') Plotly.restyle(gd, {'marker.color': T.map(t=>t.PT), 'marker.showscale': T.map(()=>true)}, idx);
-  else Plotly.restyle(gd, {'marker.color': T.map(t=>t.color), 'marker.showscale': T.map(()=>false)}, idx);
-}
 function applyWindow(){
   const t0=+$('u-winT').value, w=+$('u-winW').value; $('u-winV').textContent=t0.toFixed(2);
-  const hiU={x:[],y:[],z:[],'marker.color':[],text:[]}, dimU={x:[],y:[],z:[]}; const px=[],py=[],pz=[],ptxt=[];
+  const hiU={x:[],y:[],z:[],'marker.color':[],text:[]}, dimU={x:[],y:[],z:[]}; const P=[], col=[], lab=[];
   for (const t of T){
     if (!win){ hiU.x.push(t.X); hiU.y.push(t.Y); hiU.z.push(t.Z); hiU['marker.color'].push(mode==='pt'?t.PT:t.color); hiU.text.push(t.TXT); dimU.x.push([]); dimU.y.push([]); dimU.z.push([]); continue; }
     const n=t.X.length, ix=[], ox=[]; for (let i=0;i<n;i++) (Math.abs(t.PT[i]-t0)<=w?ix:ox).push(i);
     const pick=(A,I)=>{ const o=new Float64Array(I.length); for(let k=0;k<I.length;k++) o[k]=A[I[k]]; return o; };
     hiU.x.push(pick(t.X,ix)); hiU.y.push(pick(t.Y,ix)); hiU.z.push(pick(t.Z,ix)); hiU['marker.color'].push(mode==='pt'?pick(t.PT,ix):t.color); hiU.text.push(ix.map(i=>t.TXT[i]));
     dimU.x.push(pick(t.X,ox)); dimU.y.push(pick(t.Y,ox)); dimU.z.push(pick(t.Z,ox));
-    const p=pos(t,t0); px.push(p[0]); py.push(p[1]); pz.push(p[2]); ptxt.push(t.sym+' trajectory · pseudotime '+t0.toFixed(2));
+    if (shown(t.g)){ const p=pos(t,t0); P.push(p); col.push(t.color); lab.push(t.sym+' trajectory · pseudotime '+t0.toFixed(2)); }
   }
-  Plotly.restyle(gd, hiU, T.map(t=>t.hi)); Plotly.restyle(gd, dimU, T.map(t=>t.dim));
-  Plotly.restyle(gd, win?{x:[px],y:[py],z:[pz],text:[ptxt],visible:[true]}:{visible:[false]}, [C.particle]);
+  Plotly.restyle(gd, hiU, T.map(t=>t.hi));
+  Plotly.restyle(gd, dimU, T.map(t=>t.dim));
+  if (!win || !P.length) return Plotly.restyle(gd, {visible:false}, [C.particle]);
+  return Plotly.restyle(gd, {x:[P.map(p=>p[0])], y:[P.map(p=>p[1])], z:[P.map(p=>p[2])], text:[lab], 'marker.color':[col], visible:[true]}, [C.particle]);
 }
 function step(){ const s=$('u-winT'); let v=+s.value+0.01; if (v>1) v=0; s.value=v.toFixed(2); applyWindow(); }
-function setPlay(on){ playing=on; $('u-play').textContent=on?'❚❚ pause':'▶ play'; clearInterval(timer); if(on){ if(!win){ win=true; $('u-winOn').checked=true; } timer=setInterval(step,140); } }
-function applyPoints(){ Plotly.restyle(gd, {'marker.size':[+$('u-psz').value], 'marker.opacity':[+$('u-pop').value]}, T.map(t=>t.hi)); Plotly.restyle(gd, {'marker.size':[+$('u-psz').value]}, T.map(t=>t.dim)); }
-function applyTheme(){
-  if (!ready) return;
-  const bg=dark?'#1a1e21':'#ffffff', ink=dark?'#e6e9ec':'#1f2428', ink2=dark?'#aab4bd':'#55606a', grid=dark?'#2b3136':'#ece9e1';
-  const ax={showbackground:false, showticklabels:false, title:{text:''}, showgrid:!clean, gridcolor:grid, zeroline:!clean, zerolinecolor:grid, showspikes:false, showline:false, showaxeslabels:false};
-  Plotly.relayout(gd, {paper_bgcolor:bg, 'font.color':ink, 'title.font.color':ink, 'title.subtitle.font.color':ink2, 'legend.font.color':ink,
-    'scene.xaxis':ax, 'scene.yaxis':ax, 'scene.zaxis':ax, 'scene.bgcolor':bg, 'updatemenus[0].visible':!clean, 'title.subtitle.text':clean?'':C.subtitle,
-    'updatemenus[0].bgcolor':dark?'#22272b':'#ffffff', 'updatemenus[0].bordercolor':dark?'#3a4248':'#d9d7d1', 'updatemenus[0].font.color':ink});
-  Plotly.restyle(gd, {'marker.color':[dark?'#3a4046':'#cfcdc6']}, [C.other]);
-  Plotly.restyle(gd, {'marker.color':[dark?'#2a2f34':'#d9dce0']}, T.map(t=>t.dim));
-  Plotly.restyle(gd, {'textfont.color':[ink]}, C.labels);
-  Plotly.restyle(gd, {'line.color':[dark?'#6b7680':'#8a949d']}, C.leaders);
-  for (const t of T) Plotly.restyle(gd, {'marker.colorbar.title.font.color':[ink2], 'marker.colorbar.tickfont.color':[ink2]}, [t.hi]);
+function setPlay(on){
+  playing=on; $('u-play').textContent=on?'❚❚ pause':'▶ play'; clearInterval(timer);
+  if(on){ if(!win){ win=true; $('u-winOn').checked=true; applyVisibility(); } applyWindow(); timer=setInterval(step,140); }
+}
+function applyPoints(){
+  Plotly.restyle(gd, {'marker.size':+$('u-psz').value, 'marker.opacity':+$('u-pop').value}, T.map(t=>t.hi));
+  Plotly.restyle(gd, {'marker.size':+$('u-psz').value}, T.map(t=>t.dim));
+}
+
+/* ---------- wiring ---------- */
+function setView(v){
+  view=v;
+  document.querySelectorAll('#u-tabs [data-view]').forEach(b=>b.setAttribute('aria-selected', b.dataset.view===v?'true':'false'));
+  applyVisibility(); applyWindow(); applyLayout();
 }
 function wire(){
-  document.querySelectorAll('#u-ctl [data-mode]').forEach(b=>b.addEventListener('click', ()=>{ mode=b.dataset.mode; document.querySelectorAll('#u-ctl [data-mode]').forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false')); applyColor(); if(win) applyWindow(); }));
-  $('u-winOn').addEventListener('change', e=>{ win=e.target.checked; if(!win) setPlay(false); applyWindow(); });
-  $('u-winT').addEventListener('input', ()=>{ if(!win){ win=true; $('u-winOn').checked=true; } applyWindow(); });
+  document.querySelectorAll('#u-tabs [data-view]').forEach(b=>b.addEventListener('click', ()=>setView(b.dataset.view)));
+  document.querySelectorAll('#u-ctl [data-mode]').forEach(b=>b.addEventListener('click', ()=>{ mode=b.dataset.mode;
+    document.querySelectorAll('#u-ctl [data-mode]').forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false')); applyVisibility(); applyWindow(); }));
+  $('u-bg').addEventListener('change', e=>{ showBg=e.target.checked; Plotly.restyle(gd, {visible:showBg}, [C.other]); });
+  $('u-winOn').addEventListener('change', e=>{ win=e.target.checked; if(!win) setPlay(false); applyVisibility(); applyWindow(); });
+  $('u-winT').addEventListener('input', ()=>{ if(!win){ win=true; $('u-winOn').checked=true; applyVisibility(); } applyWindow(); });
   $('u-winW').addEventListener('input', ()=>{ if(win) applyWindow(); });
   $('u-play').addEventListener('click', ()=>setPlay(!playing));
   $('u-psz').addEventListener('input', applyPoints); $('u-pop').addEventListener('input', applyPoints);
-  $('u-clean').addEventListener('click', ()=>{ clean=!clean; $('u-clean').setAttribute('aria-pressed', clean?'true':'false'); applyTheme(); });
-  gd.on('plotly_legendclick', ev=>{ const tr=ev.data[ev.curveNumber]; const t=T.find(x=>x.hi===ev.curveNumber); if(t){ const nowHidden=tr.visible!=='legendonly'; setTimeout(()=>Plotly.restyle(gd,{visible:[nowHidden?'legendonly':true]},[t.dim]),0); } });
+  $('u-clean').addEventListener('click', ()=>{ clean=!clean; $('u-clean').setAttribute('aria-pressed', clean?'true':'false'); applyLayout(); });
+  gd.on('plotly_legendclick', ev=>{ const t=T.find(x=>x.hi===ev.curveNumber);
+    if(t){ const hiding=ev.data[ev.curveNumber].visible!=='legendonly'; setTimeout(()=>Plotly.restyle(gd,{visible:(hiding?false:win)},[t.dim]),0); } });
 }
+
 window.UMAP = {
   init(opts){
     if (ready) { this.resize(); return; }
     if (!window.Plotly){ $(opts.container).innerHTML='<div class="empty">Plotly failed to load.</div>'; return; }
     const F=JSON.parse($(opts.figId).textContent); C=JSON.parse($(opts.cfgId).textContent); dark=!!opts.dark;
-    gd=$(opts.container);
-    Plotly.newPlot(gd, F.data, F.layout, F.config).then(()=>{
-      T=C.types.map(t=>Object.assign({}, t));
-      for (const t of T){ const tr=gd.data[t.hi]; t.X=dec(tr.x); t.Y=dec(tr.y); t.Z=dec(tr.z); t.PT=dec(tr.marker.color); t.TXT=tr.text; }
-      ready=true; wire(); applyTheme(); setTimeout(()=>Plotly.Plots.resize(gd), 50);
+    gd=$(opts.container); BASE=F.layout; CONFIG=F.config;
+    T=C.types.map(t=>Object.assign({}, t));
+    for (const t of T){ const tr=F.data[t.hi]; t.X=dec(tr.x); t.Y=dec(tr.y); t.Z=dec(tr.z); t.PT=dec(tr.marker.color); t.TXT=tr.text; }
+    C.groups={}; F.data.forEach((tr,i)=>{ if(tr.legendgroup) (C.groups[tr.legendgroup]=C.groups[tr.legendgroup]||[]).push(i); });
+    computeRanges(F.data);
+    Plotly.newPlot(gd, F.data, BASE, CONFIG).then(()=>{
+      ready=true; wire(); setView(view); applyPoints();
+      setTimeout(()=>Plotly.Plots.resize(gd), 50);
     });
   },
-  resize(){ if (ready) Plotly.Plots.resize(gd); },
-  theme(isDark){ dark=!!isDark; applyTheme(); }
+  resize(){ if(ready) Plotly.Plots.resize(gd); },
+  theme(isDark){ if(!ready||dark===!!isDark) return; dark=!!isDark; applyVisibility(); applyLayout(); }
 };
 })();
 </script>
