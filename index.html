@@ -106,7 +106,7 @@ table.hm thead th.leaf button:hover{background:var(--surface-2)}
 table.hm thead th.leaf.sorted button{color:var(--accent);font-weight:600}
 table.hm thead th.corner{left:0;z-index:3;text-align:left;padding-left:10px;vertical-align:bottom;font-size:11px}
 table.hm td.rl{position:sticky;left:0;z-index:1;background:var(--surface);text-align:left;padding:0 8px 0 10px;border-right:1px solid var(--line)}
-table.hm td.rl button{border:0;background:transparent;padding:0;color:var(--ink);font:inherit;max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;text-align:left}
+table.hm td.rl button{border:0;background:transparent;padding:0;color:var(--ink);font:inherit;max-width:215px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;text-align:left}
 table.hm td.rl button:hover{color:var(--accent);text-decoration:underline}
 table.hm td.rl .inp{display:inline-block;width:7px;height:7px;background:var(--ink);border-radius:1px;margin-right:6px;vertical-align:1px}
 table.hm td.rl .inp.off{background:transparent}
@@ -122,14 +122,6 @@ table.hm tr.blk td{position:sticky;left:0;background:var(--surface-2);color:var(
 .empty{padding:40px 20px;text-align:center;color:var(--muted)}
 
 /* ---------- overview tab ---------- */
-.howto{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:10px}
-.howto summary{cursor:pointer;font-weight:600;font-size:13.5px;list-style:none;display:flex;align-items:center;gap:8px}
-.howto summary::-webkit-details-marker{display:none}
-.howto summary::before{content:"";width:7px;height:7px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
-.howto[open] summary::before{transform:rotate(45deg)}
-.howto figure{margin:12px 0 4px;display:flex;flex-direction:column;gap:8px;min-width:0}
-.howto svg{max-width:100%;height:auto;display:block}
-.howto figcaption{font-size:12.5px;color:var(--ink-2);max-width:72ch}
 .ov-bar{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;gap:14px 22px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
 .ov-bar .field{gap:4px}
 
@@ -248,112 +240,56 @@ table.sumt td:first-child{font-family:var(--font)}
 <main>
 <!-- ================= OVERVIEW ================= -->
 <section id="sec-overview" role="tabpanel" hidden>
-  <details class="howto" id="howto" open>
-    <summary>How this matrix is organised — gene set (dataset) × maturation-axis ranking × cell type</summary>
-    <figure>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 350 1000 270" role="img" aria-label="Each NES value comes from one ranking (literature or in-silico KO) tested against one compound gene set from one chemical dataset, for one cell type; matrix columns nest dataset, then ranking, then cell type" font-family="IBM Plex Sans, system-ui, sans-serif" font-size="12" fill="currentColor">
-<defs>
-<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker>
-<pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="currentColor" fill-opacity="0.04"/><rect width="1.2" height="5" fill="currentColor" fill-opacity="0.22"/></pattern>
-</defs>
-<g font-size="10.5" font-weight="500" text-anchor="end" fill-opacity="0.75">
-<text x="190" y="419">gene set from (chemical dataset)</text>
-<text x="190" y="441">maturation-axis ranking</text>
-<text x="190" y="463">target cell type</text>
-</g>
-<text x="20" y="372" font-size="15" font-weight="600">How the compound matrix is organised</text>
-<text x="20" y="392" font-size="11" fill-opacity="0.7">one cell = GSEA prerank NES of a compound's up-gene set (from one dataset) against one maturation-axis ranking, for one cell type</text>
-<text x="20" y="577" font-size="10.5" fill-opacity="0.7">hatched = not in that column's top 50</text>
-<text x="20" y="593" font-size="10.5" fill-opacity="0.7">(compounds rarely overlap between datasets)</text>
-<text x="20" y="609" font-size="10.5" fill-opacity="0.7">KO · State ⚠ = screen documented as not working</text>
+  <div id="o-tabs" role="tablist" aria-label="Target cell type">
+    <button role="tab" data-ct="beta" aria-selected="true"><i style="background:#2a78d6"></i>β cells</button>
+    <button role="tab" data-ct="alpha" aria-selected="false"><i style="background:#eb6834"></i>α cells</button>
+    <button role="tab" data-ct="delta" aria-selected="false"><i style="background:#1baf7a"></i>δ cells</button>
+  </div>
 
-
-
-<rect x="200" y="406" width="258" height="18" fill="currentColor" fill-opacity="0.1"/>
-<text x="329" y="419" font-size="11" font-weight="600" text-anchor="middle">ChemPerturb-seq</text>
-<rect x="464" y="406" width="258" height="18" fill="currentColor" fill-opacity="0.1"/>
-<text x="593" y="419" font-size="11" font-weight="600" text-anchor="middle">Sci-Plex</text>
-<rect x="728" y="406" width="258" height="18" fill="currentColor" fill-opacity="0.1"/>
-<text x="857" y="419" font-size="11" font-weight="600" text-anchor="middle">Tahoe</text>
-
-<g fill="currentColor" fill-opacity="0.05">
-<rect x="200" y="428" width="82" height="18"/><rect x="288" y="428" width="82" height="18"/>
-<rect x="464" y="428" width="82" height="18"/><rect x="552" y="428" width="82" height="18"/>
-<rect x="728" y="428" width="82" height="18"/><rect x="816" y="428" width="82" height="18"/>
-</g>
-<g fill="none" stroke="currentColor" stroke-opacity="0.35" stroke-dasharray="3 2">
-<rect x="376" y="428" width="82" height="18"/><rect x="640" y="428" width="82" height="18"/><rect x="904" y="428" width="82" height="18"/>
-</g>
-<g font-size="9.5" font-weight="500" text-anchor="middle">
-<text x="241" y="441">literature</text><text x="329" y="441">KO · sCLIP</text><text x="417" y="441" fill-opacity="0.6">KO · State ⚠</text>
-<text x="505" y="441">literature</text><text x="593" y="441">KO · sCLIP</text><text x="681" y="441" fill-opacity="0.6">KO · State ⚠</text>
-<text x="769" y="441">literature</text><text x="857" y="441">KO · sCLIP</text><text x="945" y="441" fill-opacity="0.6">KO · State ⚠</text>
-</g>
-<g font-size="11" font-weight="500" text-anchor="middle" fill-opacity="0.8">
-<text x="213" y="463">α</text><text x="241" y="463">β</text><text x="269" y="463">δ</text>
-<text x="301" y="463">α</text><text x="329" y="463">β</text><text x="357" y="463">δ</text>
-<text x="389" y="463">α</text><text x="417" y="463">β</text><text x="445" y="463">δ</text>
-<text x="477" y="463">α</text><text x="505" y="463">β</text><text x="533" y="463">δ</text>
-<text x="565" y="463">α</text><text x="593" y="463">β</text><text x="621" y="463">δ</text>
-<text x="653" y="463">α</text><text x="681" y="463">β</text><text x="709" y="463">δ</text>
-<text x="741" y="463">α</text><text x="769" y="463">β</text><text x="797" y="463">δ</text>
-<text x="829" y="463">α</text><text x="857" y="463">β</text><text x="885" y="463">δ</text>
-<text x="917" y="463">α</text><text x="945" y="463">β</text><text x="973" y="463">δ</text>
-</g>
-
-<text x="190" y="485" font-size="11" text-anchor="end">amlodipine (maleate)</text>
-<text x="190" y="507" font-size="11" text-anchor="end">FILGOTINIB</text>
-<text x="190" y="529" font-size="11" text-anchor="end">Panobinostat</text>
-<g fill="#e34948">
-<rect x="201" y="471" width="26" height="20" rx="2" fill-opacity="0.30"/><rect x="229" y="471" width="26" height="20" rx="2" fill-opacity="0.12"/><rect x="257" y="471" width="26" height="20" rx="2" fill-opacity="0.26"/>
-<rect x="289" y="471" width="26" height="20" rx="2" fill-opacity="0.34"/><rect x="317" y="471" width="26" height="20" rx="2"/><rect x="345" y="471" width="26" height="20" rx="2" fill-opacity="0.30"/>
-<rect x="465" y="493" width="26" height="20" rx="2" fill-opacity="0.22"/><rect x="493" y="493" width="26" height="20" rx="2" fill-opacity="0.35"/><rect x="521" y="493" width="26" height="20" rx="2" fill-opacity="0.18"/>
-<rect x="553" y="493" width="26" height="20" rx="2" fill-opacity="0.30"/><rect x="581" y="493" width="26" height="20" rx="2" fill-opacity="0.28"/><rect x="609" y="493" width="26" height="20" rx="2" fill-opacity="0.10"/>
-<rect x="729" y="515" width="26" height="20" rx="2" fill-opacity="0.26"/><rect x="757" y="515" width="26" height="20" rx="2" fill-opacity="0.14"/><rect x="785" y="515" width="26" height="20" rx="2" fill-opacity="0.20"/>
-<rect x="817" y="515" width="26" height="20" rx="2" fill-opacity="0.32"/><rect x="845" y="515" width="26" height="20" rx="2" fill-opacity="0.24"/><rect x="873" y="515" width="26" height="20" rx="2" fill-opacity="0.16"/>
-<rect x="289" y="515" width="26" height="20" rx="2" fill-opacity="0.12"/>
-</g>
-<text x="330" y="485" font-size="9.5" font-weight="600" text-anchor="middle" fill="#ffffff">1.70</text>
-<g fill="url(#hatch)">
-<rect x="377" y="471" width="82" height="20"/><rect x="465" y="471" width="258" height="20"/><rect x="729" y="471" width="258" height="20"/>
-<rect x="201" y="493" width="258" height="20"/><rect x="641" y="493" width="82" height="20"/><rect x="729" y="493" width="258" height="20"/>
-<rect x="201" y="515" width="82" height="20"/><rect x="317" y="515" width="142" height="20"/><rect x="465" y="515" width="258" height="20"/><rect x="905" y="515" width="82" height="20"/>
-</g>
-
-<path d="M330,492 V556" stroke="currentColor" stroke-opacity="0.8" stroke-width="1.3" fill="none"/>
-<circle cx="330" cy="492" r="2.5" fill="#e34948"/>
-<rect x="316" y="558" width="520" height="48" rx="6" fill="#e34948" fill-opacity="0.08" stroke="#e34948" stroke-opacity="0.7" stroke-width="1.2"/>
-<text x="330" y="577" font-size="11" font-weight="500">this cell = NES of amlodipine's ChemPerturb-seq up-genes tested against the</text>
-<text x="330" y="593" font-size="11" font-weight="500">β-cell in-silico-KO (sCLIP) ranking · hover adds FDR, rank, Δ%, cell count</text>
-
-
-
-</svg>
-      <figcaption>Every cell is one GSEA prerank run: a compound's up-regulated gene set from one chemical dataset, tested against one maturation-axis ranking (literature, or an in-silico knockout screen with the sCLIP or State model), for one target cell type. Part 3 (DGIdb drugs) is a separate path — ranking › pathway enrichment › druggable targets › drug score — and has its own view under Heatmap.</figcaption>
-    </figure>
-  </details>
   <div class="ov-bar">
-    <div class="field"><span class="lbl">Maturation-axis ranking (shown under every dataset)</span>
+    <div class="field"><span class="lbl">Maturation-axis ranking</span>
       <div class="chips" id="o-cond">
         <button class="chip" data-v="lit" aria-pressed="true">literature (DPS)</button>
         <button class="chip" data-v="ko-sclip" aria-pressed="true">in-silico KO · sCLIP</button>
         <button class="chip" data-v="ko-state" aria-pressed="false">in-silico KO · State ⚠</button>
       </div>
     </div>
-    <div class="field"><span class="lbl">Rows per dataset</span>
-      <select id="o-per"><option value="10">top 10</option><option value="20" selected>top 20</option><option value="30">top 30</option><option value="50">top 50</option></select>
+    <div class="field"><span class="lbl">Chemical dataset</span>
+      <div class="chips" id="o-ds">
+        <button class="chip" data-v="cps" aria-pressed="true">ChemPerturb-seq</button>
+        <button class="chip" data-v="sp" aria-pressed="true">Sci-Plex</button>
+        <button class="chip" data-v="th" aria-pressed="true">Tahoe</button>
+      </div>
     </div>
-    <div class="field"><span class="lbl">Color</span>
-      <select id="o-fill"><option value="nesz" selected>NES z-score within column (red–blue)</option><option value="nes">absolute NES</option><option value="dpct">Δ% of target cells</option></select>
+    <div class="field"><span class="lbl">Rank candidates by</span>
+      <select id="o-sort">
+        <option value="ev" selected>supporting columns, then NES</option>
+        <option value="nes">max NES</option>
+        <option value="dpct">Δ% (ChemPerturb-seq)</option>
+        <option value="name">name A→Z</option>
+      </select>
     </div>
-    <div class="field"><span class="lbl">Mark * when FDR &lt;</span>
-      <select id="o-fdr"><option value="0.05" selected>0.05</option><option value="0.1">0.10</option><option value="0.25">0.25</option><option value="0">never</option></select>
+    <div class="field"><span class="lbl">Show</span>
+      <div class="row tight">
+        <select id="o-per"><option value="25">top 25</option><option value="50" selected>top 50</option><option value="100">top 100</option><option value="0">all</option></select>
+        <label class="hint" for="o-minev">supported by ≥</label>
+        <input type="number" id="o-minev" min="1" max="9" value="1"> <span class="hint">column(s)</span>
+      </div>
     </div>
     <div class="field"><span class="lbl">Cells</span>
       <div class="row tight">
-        <label class="check"><input type="checkbox" id="o-values"> values</label>
-        <label class="check"><input type="checkbox" id="o-inpanel"> final-panel compounds only</label>
+        <select id="o-fill"><option value="nes" selected>absolute NES</option><option value="nesz">NES z-score within column</option></select>
+        <label class="hint" for="o-fdr">* FDR &lt;</label>
+        <select id="o-fdr"><option value="0.05" selected>0.05</option><option value="0.1">0.10</option><option value="0.25">0.25</option><option value="0">never</option></select>
+        <label class="check"><input type="checkbox" id="o-values" checked> values</label>
         <select id="o-size"><option value="regular" selected>regular</option><option value="compact">compact</option></select>
+      </div>
+    </div>
+    <div class="field"><span class="lbl">Filter</span>
+      <div class="row tight">
+        <label class="check"><input type="checkbox" id="o-inpanel"> in final 32-compound panel</label>
+        <label class="check"><input type="checkbox" id="o-sig"> ≥1 cell passing FDR</label>
+        <label class="check"><input type="checkbox" id="o-dpct"> has Δ%</label>
       </div>
     </div>
     <div class="field"><span class="lbl">Export</span>
@@ -365,12 +301,14 @@ table.sumt td:first-child{font-family:var(--font)}
       </div>
     </div>
   </div>
+
   <div class="stage">
     <div class="status" id="ov-status"></div>
     <div class="legend" id="ov-legend"></div>
     <div class="note warn" id="ov-warn" hidden></div>
     <div class="scroller" id="ov-scroller"></div>
   </div>
+  <p class="hint umap-note">Picking compounds: the <b>support</b> pips count how many of the shown columns put this compound in their top 50, filled where it also clears the FDR cut — a compound supported by both rankings inside ChemPerturb-seq is the strongest in-silico evidence here, since the three datasets screen almost disjoint compound libraries (only 6–10 compounds per cell type appear in more than one). <b>Δ%</b> is the only experimental read-out and exists for ChemPerturb-seq alone; it is a percentage over very unequal wells, so a value marked <b>!</b> sits on a well with fewer than 1000 cells and is confounded by cytotoxicity. In this build no pick has a positive Δ% on a well-populated well.</p>
 </section>
 
 <!-- ================= HEATMAP ================= -->
@@ -4647,11 +4585,11 @@ const dispName = n => (NAME[n] ? NAME[n].name : (P3NAME[n] || n));
 const DEF = {ds:['cps'], cond:['lit','ko'], scr:['sclip'], ct:['alpha','beta','delta'], q:'', top:50, sortBy:'max', sortCol:null, sortDir:-1,
   inPanel:false, sig:false, dpct:false, wellPop:false, minCols:1, fill:'nes', range:'minmax', fdrCut:0.05, values:false, size:'regular'};
 let S = Object.assign({}, DEF);
-const ODEF = {conds:['lit','ko-sclip'], per:20, fill:'nesz', fdrCut:0.05, values:false, inPanel:false, size:'regular'};
+const ODEF = {ct:'beta', conds:['lit','ko-sclip'], ds:['cps','sp','th'], per:50, fill:'nes', fdrCut:0.05, values:true, inPanel:false, sig:false, dpct:false, minEv:1, sortBy:'ev', size:'regular'};
 let O = Object.assign({}, ODEF);
 let R = {part:1, runs:RUNS.slice(), cond:['lit','ko'], ds:['sp','th'], inPanel:false, q:'', cols:{}, sort:null, dir:1, limit:100};
-try { const saved = JSON.parse(localStorage.getItem('mpe.state3')||'null'); if (saved){ if (saved.S) S = Object.assign({}, DEF, saved.S); if (saved.O && Array.isArray(saved.O.conds)) O = Object.assign({}, ODEF, saved.O); } } catch(e){}
-function persist(){ try { localStorage.setItem('mpe.state3', JSON.stringify({S,O})); } catch(e){} }
+try { const saved = JSON.parse(localStorage.getItem('mpe.state4')||'null'); if (saved){ if (saved.S) S = Object.assign({}, DEF, saved.S); if (saved.O && Array.isArray(saved.O.conds) && saved.O.ct) O = Object.assign({}, ODEF, saved.O); } } catch(e){}
+function persist(){ try { localStorage.setItem('mpe.state4', JSON.stringify({S,O})); } catch(e){} }
 
 /* ---------- theme-aware ramps ---------- */
 function isDark(){ const t=document.documentElement.getAttribute('data-theme'); if(t==='dark') return true; if(t==='light') return false; return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; }
@@ -4967,43 +4905,123 @@ $('x-png').addEventListener('click', ()=>savePng(matrixSvg(CUR,oS()), 'maturatio
 /* ================= OVERVIEW TAB ================= */
 let OV = {cols:[], rows:[], scale:null, blocks:[], sortable:false};
 const oO = () => ({fill:O.fill, range:'minmax', fdrCut:O.fdrCut, values:O.values, size:O.size, dg:false});
+const RK = {'lit':{cond:'lit',scr:'both',label:'literature (DPS)'}, 'ko-sclip':{cond:'ko',scr:'sclip',label:'in-silico KO · sCLIP'}, 'ko-state':{cond:'ko',scr:'state',label:'in-silico KO · State'}};
 function renderOverview(){
-  const o=oO();
-  const RK = {'lit':{cond:'lit',scr:'both'}, 'ko-sclip':{cond:'ko',scr:'sclip'}, 'ko-state':{cond:'ko',scr:'state'}};
+  const o=oO(), ct=O.ct;
   const rks = ['lit','ko-sclip','ko-state'].filter(k=>O.conds.includes(k));
-  const cols=[]; for (const ds of ['cps','sp','th']) for (const k of rks){ const {cond,scr}=RK[k]; for (const ct of CTS) cols.push({ds, cond, scr, ct, key:ds+'|'+cond+'|'+scr+'|'+ct}); }
-  if (!cols.length){ OV={cols:[],rows:[],scale:null,blocks:[],sortable:false}; $('ov-status').innerHTML=''; $('ov-legend').innerHTML=''; $('ov-warn').hidden=true; $('ov-scroller').innerHTML='<div class="empty">Select at least one ranking.</div>'; return; }
+  const dss = ['cps','sp','th'].filter(d=>O.ds.includes(d));
+  const cols=[]; for (const ds of dss) for (const k of rks){ const {cond,scr}=RK[k]; cols.push({ds, cond, scr, ct, rk:k, key:ds+'|'+cond+'|'+scr+'|'+ct}); }
+  if (!cols.length){ OV={cols:[],rows:[],scale:null,sortable:false}; $('ov-status').innerHTML=''; $('ov-legend').innerHTML=''; $('ov-warn').hidden=true;
+    $('ov-scroller').innerHTML='<div class="empty">Select at least one ranking and one dataset.</div>'; return; }
   const map = collectRows(cols);
-  const rows=[], blocks=[];
-  ['cps','sp','th'].forEach(ds=>{
-    const idx = cols.map((c,i)=>c.ds===ds?i:-1).filter(i=>i>=0);
-    let cand = [...map.values()].filter(r=>idx.some(i=>r.cells[i]));
-    const total = cand.length;
-    if (O.inPanel) cand = cand.filter(r=>r.inp);
-    cand.forEach(r=>{ r.key = Math.max(...idx.map(i=>r.cells[i]?r.cells[i].nes:-Infinity)); });
-    cand.sort((a,b)=> (b.key-a.key) || a.name.localeCompare(b.name));
-    const take = cand.slice(0, O.per).map(r=>Object.assign({}, r, {cells:r.cells.slice()}));
-    blocks.push({key:ds, start:rows.length, n:take.length, label:DS[ds]+' — top '+take.length+' of '+total+' by NES in its own columns'+(O.inPanel?' (final-panel compounds only)':'')});
-    rows.push(...take);
-  });
-  const scale = makeScale(rows, o);
-  OV = {cols, rows, scale, blocks, sortable:false};
-  const rkLabel = {'lit':'literature (DPS)','ko-sclip':'in-silico KO · sCLIP','ko-state':'in-silico KO · State'};
-  $('ov-status').innerHTML = '<span><strong>'+rows.length+'</strong> compounds ('+blocks.map(b=>b.n).join(' + ')+')</span><span><strong>'+cols.length+'</strong> columns · 3 datasets × '+rks.length+' ranking'+(rks.length>1?'s':'')+' × α/β/δ</span><span>'+esc(rks.map(k=>rkLabel[k]).join(' · '))+'</span><span class="hint">rows ranked by max NES within each dataset block; cells in other datasets show where the same compound also ranks in that dataset\'s top 50</span>';
+  // per-compound extras from the ChemPerturb-seq records of this cell type
+  let rows=[...map.values()];
+  for (const r of rows){
+    const present = r.cells.filter(Boolean);
+    r.ev = present.length;
+    r.evSig = present.filter(x=>sigMark(x,O.fdrCut)).length;
+    const nes = present.map(x=>x.nes).filter(v=>v!=null);
+    r.maxNes = nes.length?Math.max(...nes):null;
+    const cps = (BYNORM[r.n]||[]).filter(x=>x.ds==='cps' && x.ct===ct && x.dpct!=null);
+    r.dpct = cps.length?cps[0].dpct:null; r.ncells = cps.length?cps[0].cells:null; r.low = cps.length?cps[0].low:null;
+    const th = (BYNORM[r.n]||[]).find(x=>x.ds==='th' && x.moa);
+    r.moa = th?th.moa:'';
+  }
+  const total = rows.length;
+  if (O.inPanel) rows=rows.filter(r=>r.inp);
+  if (O.sig) rows=rows.filter(r=>r.evSig>0);
+  if (O.dpct) rows=rows.filter(r=>r.dpct!=null);
+  rows=rows.filter(r=>r.ev>=O.minEv);
+  const cmp = {
+    ev:(a,b)=> (b.ev-a.ev) || (b.evSig-a.evSig) || ((b.maxNes||0)-(a.maxNes||0)) || a.name.localeCompare(b.name),
+    nes:(a,b)=> ((b.maxNes||-9)-(a.maxNes||-9)) || a.name.localeCompare(b.name),
+    dpct:(a,b)=> ((b.dpct==null?-9e9:b.dpct)-(a.dpct==null?-9e9:a.dpct)) || a.name.localeCompare(b.name),
+    name:(a,b)=> a.name.localeCompare(b.name)
+  }[O.sortBy];
+  rows.sort(cmp);
+  const shownRows = O.per>0 ? rows.slice(0,O.per) : rows;
+  const scale = makeScale(shownRows, o);
+  OV = {cols, rows:shownRows, scale, sortable:false, ct};
+  // status
+  const nBoth = rows.filter(r=>{ const ci=cols.map((c,i)=>c.ds==='cps'?i:-1).filter(i=>i>=0); return ci.filter(i=>r.cells[i]).length>=2; }).length;
+  const wp = rows.filter(r=>r.dpct!=null && r.dpct>0 && r.low===false).length;
+  const sym = {alpha:'α', beta:'β', delta:'δ'}[ct];
+  $('ov-status').innerHTML = '<span><strong>'+shownRows.length+'</strong> of '+rows.length+' candidates'+(rows.length!==total?' (from '+total+')':'')+'</span>'
+    + '<span><strong>'+cols.length+'</strong> columns · '+dss.length+' dataset'+(dss.length>1?'s':'')+' × '+rks.length+' ranking'+(rks.length>1?'s':'')+' · target '+sym+' '+ct+'</span>'
+    + '<span>'+nBoth+' supported by ≥2 ChemPerturb-seq columns</span>'
+    + '<span'+(wp?'':' class="hint"')+'>'+wp+' with Δ% &gt; 0 on a well-populated well</span>';
   const stateShown = rks.includes('ko-state');
   $('ov-warn').hidden = !stateShown; if (stateShown) $('ov-warn').innerHTML = STATE_WARN;
-  $('ov-legend').innerHTML = legendHtml(scale, o);
-  $('ov-scroller').innerHTML = rows.length ? matrixHtml(OV, o) : '<div class="empty">No rows for this selection.</div>';
+  $('ov-legend').innerHTML = legendHtml(scale, o)
+    + '<span><i class="sw" style="background:var(--ink);border-color:var(--ink);width:7px"></i>support pip = in that column\'s top 50 (filled = also passes FDR)</span>';
+  $('ov-scroller').innerHTML = shownRows.length ? overviewHtml(OV, o) : '<div class="empty">No candidate matches these filters.</div>';
+}
+function overviewHtml(mat, o){
+  const {cols, rows, scale} = mat;
+  const h=[]; h.push('<table class="hm sz-'+o.size+'"><thead>');
+  h.push('<tr><th class="corner" rowspan="2">compound</th><th rowspan="2" class="sup" title="how many of the shown columns rank this compound in their top 50; filled pips also pass the FDR cut">support</th>');
+  groupRuns(cols, c=>c.ds).forEach(gr=>h.push('<th class="grp" colspan="'+gr.n+'">'+esc(DS[gr.k])+'</th>'));
+  h.push('<th class="extra" rowspan="2" title="change in the target cell fraction after the compound (ChemPerturb-seq only)">Δ%</th>');
+  h.push('<th class="extra" rowspan="2" title="total cells in that well">cells</th>');
+  h.push('<th class="extra" rowspan="2" style="text-align:left">MoA (Tahoe)</th></tr><tr>');
+  cols.forEach(c=>h.push('<th class="sub leaf" style="font-size:10px">'+esc(RK[c.rk].label.replace('in-silico KO · ',''))+(c.scr==='state'?' ⚠':'')+'</th>'));
+  h.push('</tr></thead><tbody>');
+  rows.forEach((row,ri)=>{
+    h.push('<tr><td class="rl"><button data-n="'+esc(row.n)+'" title="'+esc([...(ALIAS[row.n]||[row.name])].join(' / '))+'"><i class="inp'+(row.inp?'':' off')+'"></i>'+esc(row.name)+'</button></td>');
+    let pips=''; row.cells.forEach(rec=>{ pips += '<i class="pip'+(rec?(sigMark(rec,o.fdrCut)?' on':' half'):'')+'"></i>'; });
+    h.push('<td class="ev">'+pips+'<span class="n" title="'+row.evSig+' of '+row.ev+' supporting columns pass FDR &lt; '+o.fdrCut+'">'+row.evSig+'/'+row.ev+'</span></td>');
+    row.cells.forEach((rec,ci)=>{
+      if(!rec){ h.push('<td class="c na" data-r="'+ri+'" data-c="'+ci+'"></td>'); return; }
+      const v = fillOf(rec,o.fill), col = scale.color(v);
+      const bg = col? rgbStr(col) : 'var(--na)', ink = col? inkOn(col) : 'var(--muted)';
+      const sig = sigMark(rec,o.fdrCut);
+      const txt = (o.values ? esc(cellText(rec,v,o.fill)) : '') + (sig?'<span class="mk">*</span>':'');
+      h.push('<td class="c" data-r="'+ri+'" data-c="'+ci+'" style="background:'+bg+';color:'+ink+'">'+txt+'</td>');
+    });
+    const dcol = row.dpct==null ? null : (row.dpct>=0 ? rampColor((isDark()?RAMPS.dark:RAMPS.light).red, Math.min(1,row.dpct/5)) : rampColor((isDark()?RAMPS.dark:RAMPS.light).blue, Math.min(1,-row.dpct/5)));
+    h.push('<td class="extra dp"'+(dcol?' style="background:'+rgbStr(dcol)+';color:'+inkOn(dcol)+'"':'')+'>'+(row.dpct==null?'—':fmtS(row.dpct,2)+(row.low?'<span class="flag">!</span>':''))+'</td>');
+    h.push('<td class="extra">'+(row.ncells==null?'—':Math.round(row.ncells))+'</td>');
+    h.push('<td class="extra" style="text-align:left;font-family:var(--font);max-width:190px;overflow:hidden;text-overflow:ellipsis">'+esc(row.moa||'')+'</td>');
+    h.push('</tr>');
+  });
+  h.push('</tbody></table>');
+  return h.join('');
+}
+function overviewCsv(){
+  const {cols, rows, scale}=OV;
+  const lab=c=>DS[c.ds]+' | '+RK[c.rk].label;
+  const head=['compound','key','in_final_panel','support_sig','support_total', ...cols.map(c=>lab(c)+' '+scale.label), ...cols.map(c=>lab(c)+' FDR'), 'delta_pct','total_cells','low_cell_count','moa_tahoe'];
+  const lines=[head.map(csvCell).join(',')];
+  for (const r of rows) lines.push([r.name, r.n, r.inp?'yes':'no', r.evSig, r.ev,
+    ...r.cells.map(c=>{const v=fillOf(c,O.fill); return v==null?'':(O.fill==='nesz'?(+v).toFixed(3):v);}),
+    ...r.cells.map(c=>c&&c.fdr!=null?c.fdr:''),
+    r.dpct==null?'':r.dpct, r.ncells==null?'':Math.round(r.ncells), r.dpct==null?'':(r.low?'yes':'no'), r.moa||''].map(csvCell).join(','));
+  return lines.join('\n');
 }
 bindMatrix('ov-scroller', ()=>OV, oO, null);
-$('o-cond').addEventListener('click', e=>{ const b=e.target.closest('.chip'); if(!b) return; const set=new Set(O.conds); set.has(b.dataset.v)?set.delete(b.dataset.v):set.add(b.dataset.v); O.conds=[...set]; b.setAttribute('aria-pressed', set.has(b.dataset.v)?'true':'false'); persist(); renderOverview(); });
+$('o-tabs').addEventListener('click', e=>{ const b=e.target.closest('[data-ct]'); if(!b) return; O.ct=b.dataset.ct;
+  document.querySelectorAll('#o-tabs [data-ct]').forEach(x=>x.setAttribute('aria-selected', x===b?'true':'false')); persist(); renderOverview(); });
+function wireOChips(id, key){ $(id).addEventListener('click', e=>{ const b=e.target.closest('.chip'); if(!b) return;
+  const set=new Set(O[key]); set.has(b.dataset.v)?set.delete(b.dataset.v):set.add(b.dataset.v); O[key]=[...set];
+  b.setAttribute('aria-pressed', set.has(b.dataset.v)?'true':'false'); persist(); renderOverview(); }); }
+wireOChips('o-cond','conds'); wireOChips('o-ds','ds');
 const obind = (id, key, get) => $(id).addEventListener('input', e=>{ O[key]=get(e.target); persist(); renderOverview(); });
-obind('o-per','per', t=>+t.value); obind('o-fill','fill', t=>t.value); obind('o-fdr','fdrCut', t=>+t.value); obind('o-values','values', t=>t.checked); obind('o-inpanel','inPanel', t=>t.checked); obind('o-size','size', t=>t.value);
-function syncOverview(){ for (const x of document.querySelectorAll('#o-cond .chip')) x.setAttribute('aria-pressed', O.conds.includes(x.dataset.v)?'true':'false'); $('o-per').value=String(O.per); $('o-fill').value=O.fill; $('o-fdr').value=String(O.fdrCut); $('o-values').checked=O.values; $('o-inpanel').checked=O.inPanel; $('o-size').value=O.size; }
-$('ox-copy').addEventListener('click', ()=>copyText(matrixCsv(OV,oO()), 'Overview CSV copied ('+OV.rows.length+' rows)'));
-$('ox-csv').addEventListener('click', ()=>download('maturation_overview_'+O.conds.join('-')+'.csv', matrixCsv(OV,oO())));
-$('ox-svg').addEventListener('click', ()=>download('maturation_overview_'+O.conds.join('-')+'.svg', matrixSvg(OV,oO())));
-$('ox-png').addEventListener('click', ()=>savePng(matrixSvg(OV,oO()), 'maturation_overview_'+O.conds.join('-')+'.png'));
+obind('o-per','per', t=>+t.value); obind('o-fill','fill', t=>t.value); obind('o-fdr','fdrCut', t=>+t.value);
+obind('o-values','values', t=>t.checked); obind('o-inpanel','inPanel', t=>t.checked); obind('o-sig','sig', t=>t.checked);
+obind('o-dpct','dpct', t=>t.checked); obind('o-size','size', t=>t.value); obind('o-sort','sortBy', t=>t.value);
+obind('o-minev','minEv', t=>Math.max(1,+t.value||1));
+function syncOverview(){
+  document.querySelectorAll('#o-tabs [data-ct]').forEach(x=>x.setAttribute('aria-selected', x.dataset.ct===O.ct?'true':'false'));
+  for (const b of document.querySelectorAll('#o-cond .chip')) b.setAttribute('aria-pressed', O.conds.includes(b.dataset.v)?'true':'false');
+  for (const b of document.querySelectorAll('#o-ds .chip')) b.setAttribute('aria-pressed', O.ds.includes(b.dataset.v)?'true':'false');
+  $('o-per').value=String(O.per); $('o-fill').value=O.fill; $('o-fdr').value=String(O.fdrCut); $('o-values').checked=O.values;
+  $('o-inpanel').checked=O.inPanel; $('o-sig').checked=O.sig; $('o-dpct').checked=O.dpct; $('o-size').value=O.size;
+  $('o-sort').value=O.sortBy; $('o-minev').value=O.minEv;
+}
+$('ox-copy').addEventListener('click', ()=>copyText(overviewCsv(), 'Overview CSV copied ('+OV.rows.length+' rows)'));
+$('ox-csv').addEventListener('click', ()=>download('maturation_candidates_'+O.ct+'.csv', overviewCsv()));
+$('ox-svg').addEventListener('click', ()=>download('maturation_candidates_'+O.ct+'.svg', matrixSvg(OV,oO())));
+$('ox-png').addEventListener('click', ()=>savePng(matrixSvg(OV,oO()), 'maturation_candidates_'+O.ct+'.png'));
 
 /* ---------- drawer ---------- */
 const drawer=$('drawer');
